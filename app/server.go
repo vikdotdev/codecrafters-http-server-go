@@ -64,22 +64,25 @@ func main() {
 	fmt.Println("METHOD:", method)
 	fmt.Println("PATH:", path)
 
-	_, found = matchesPath(path, "/")
+	_, found = matchesPath(path, `^/$`)
 	if found {
+		fmt.Println("ROOT FOUND")
 		conn.Write([]byte(fmt.Sprintf("%s %s\r\n\r\n", protocolVersion, statusOk)))
 		return
 	}
 
-	_, found = matchesPath(path, `^/echo/(.+)`)
+	body, found := matchesPath(path, `^/echo/(.+)`)
 	if found {
-		conn.Write([]byte(fmt.Sprintf("%s %s\r\n\r\n", protocolVersion, statusNotFound)))
+		fmt.Println("ECHO FOUND")
+		renderResponse(conn, body)
 		return
 	}
 
+	fmt.Println("NOT FOUND")
 	conn.Write([]byte(fmt.Sprintf("%s %s\r\n\r\n", protocolVersion, statusNotFound)))
 }
 
-func matchesPath(pattern string, path string) (string, bool) {
+func matchesPath(path string, pattern string) (string, bool) {
 	re := regexp.MustCompile(pattern)
 	match := re.FindStringSubmatch(path)
 
@@ -92,5 +95,7 @@ func matchesPath(pattern string, path string) (string, bool) {
 func renderResponse(conn net.Conn, body string) {
 	contentType := "Content-Type: text/plain\r\n"
 	contentLength := fmt.Sprintf("Content-Length: %d\r\n", len(body))
-	conn.Write([]byte(fmt.Sprintf("%s %s\r\n\r\n%s%s\r\n\r\n%s", protocolVersion, statusOk, contentType, contentLength, body)))
+	response := fmt.Sprintf("%s %s\r\n\r\n%s%s\r\n%s", protocolVersion, statusOk, contentType, contentLength, body)
+	fmt.Println(response)
+	conn.Write([]byte(response))
 }
