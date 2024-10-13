@@ -86,8 +86,11 @@ func matchesPath(path string, pattern string) (string, bool) {
 	re := regexp.MustCompile(pattern)
 	match := re.FindStringSubmatch(path)
 
-	if len(match) > 1 {
-		return match[1], true
+	if len(match) > 0 {
+		if len(match) > 1 {
+			return match[1], true
+		}
+		return match[0], true
 	}
 	return "", false
 }
