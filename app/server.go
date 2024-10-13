@@ -95,7 +95,7 @@ func matchesPath(path string, pattern string) (string, bool) {
 func renderResponse(conn net.Conn, body string) {
 	contentType := "Content-Type: text/plain\r\n"
 	contentLength := fmt.Sprintf("Content-Length: %d\r\n", len(body))
-	response := fmt.Sprintf("%s %s\r\n\r\n%s%s\r\n%s", protocolVersion, statusOk, contentType, contentLength, body)
+	response := fmt.Sprintf("%s %s\r\n%s%s\r\n%s", protocolVersion, statusOk, contentType, contentLength, body)
 	fmt.Println(response)
 	conn.Write([]byte(response))
 }
