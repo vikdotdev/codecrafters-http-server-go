@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+    "regexp"
 	"strings"
 )
 
@@ -63,10 +64,33 @@ func main() {
 	fmt.Println("METHOD:", method)
 	fmt.Println("PATH:", path)
 
-	if path == "/" {
+	_, found = matchesPath(path, "/")
+	if found {
 		conn.Write([]byte(fmt.Sprintf("%s %s\r\n\r\n", protocolVersion, statusOk)))
-	} else {
-		conn.Write([]byte(fmt.Sprintf("%s %s\r\n\r\n", protocolVersion, statusNotFound)))
+		return
 	}
 
+	_, found = matchesPath(path, `^/echo/(.+)`)
+	if found {
+		conn.Write([]byte(fmt.Sprintf("%s %s\r\n\r\n", protocolVersion, statusNotFound)))
+		return
+	}
+
+	conn.Write([]byte(fmt.Sprintf("%s %s\r\n\r\n", protocolVersion, statusNotFound)))
+}
+
+func matchesPath(pattern string, path string) (string, bool) {
+	re := regexp.MustCompile(pattern)
+	match := re.FindStringSubmatch(path)
+
+	if len(match) > 1 {
+		return match[1], true
+	}
+	return "", false
+}
+
+func renderResponse(conn net.Conn, body string) {
+	contentType := "Content-Type: text/plain\r\n"
+	contentLength := fmt.Sprintf("Content-Length: %d\r\n", len(body))
+	conn.Write([]byte(fmt.Sprintf("%s %s\r\n\r\n%s%s\r\n\r\n%s", protocolVersion, statusOk, contentType, contentLength, body)))
 }
